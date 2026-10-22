@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C++ Nền Tảng — Tài liệu học lập trình</title>
+<script>
+  /* Áp giao diện trước khi vẽ trang để không bị nháy màu trắng */
+  (function(){
+    try{
+      var t = localStorage.getItem('cpp-theme');
+      if(!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    }catch(e){}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f5f0;
+  --surface:#fffdf9;
+  --surface-2:#fbf8f2;
+  --line:#e9e3d6;
+  --line-soft:#f1ece1;
+  --ink:#14171e;
+  --body:#3a4256;
+  --muted:#7c7a72;
+  --primary:#2f6f5e;
+  --rust:#c97b3f;
+  --ink-hover:#0a0d12;
+  --glow1:rgba(201,123,63,.10);
+  --glow2:rgba(47,111,94,.09);
+  --maxw:1160px;
+  --radius:16px;
+  --shadow-1:0 2px 8px rgba(20,23,30,.04);
+  --shadow-2:0 12px 30px -14px rgba(20,23,30,.22);
+  /* màu 4 chương — sáng: #c1 #c2 #c3 #c4 (được JS ghi đè khi đổi nền) */
+  --c1:#c97b3f; --c2:#2f6f5e; --c3:#4a6fa5; --c4:#9c4f63;
+}
+/* ================== GIAO DIỆN TỐI ================== */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#14171c;
+  --surface:#1c2027;
+  --surface-2:#212630;
+  --line:#2c323c;
+  --line-soft:#242a33;
+  --ink:#eceef2;
+  --body:#a9b1be;
+  --muted:#7f8795;
+  --primary:#5cb79c;
+  --rust:#d99a63;
+  --ink-hover:#f4f6fa;
+  --glow1:rgba(217,154,99,.10);
+  --glow2:rgba(92,183,156,.08);
+  --shadow-1:0 2px 8px rgba(0,0,0,.30);
+  --shadow-2:0 14px 34px -14px rgba(0,0,0,.70);
+}
+/* chuyển màu mượt khi bấm nút */
+body,.topbar,.path-card,.ch-opener,.lesson,.btn,.pill,#search,.empty,footer{
+  transition:background-color .25s ease,color .25s ease,border-color .25s ease;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--body);
+  font-family:'Outfit',sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(760px 420px at 12% -8%, var(--glow1), transparent 62%),
+    radial-gradient(700px 460px at 92% 4%, var(--glow2), transparent 60%);
+}
+h1,h2,h3{font-family:'DM Serif Display',serif;color:var(--ink);font-weight:400;letter-spacing:-.005em;margin:0;text-wrap:balance}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+@media (max-width:640px){.wrap{padding:0 18px}}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:saturate(150%) blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:var(--maxw);margin:0 auto;padding:11px 24px;
+  display:flex;align-items:center;gap:20px;
+}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand-mark{
+  width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  background:var(--ink);color:var(--bg);box-shadow:var(--shadow-1);
+  transition:background-color .25s ease,color .25s ease;
+}
+/* nút chuyển sáng / tối */
+.theme-toggle{
+  flex-shrink:0;width:38px;height:38px;border-radius:11px;cursor:pointer;
+  display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);
+  color:var(--body);transition:all .2s ease;
+}
+.theme-toggle:hover{color:var(--ink);border-color:var(--ink);transform:translateY(-1px)}
+.theme-toggle:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.theme-toggle .ico-sun{display:none}
+html[data-theme="dark"] .theme-toggle .ico-sun{display:block}
+html[data-theme="dark"] .theme-toggle .ico-moon{display:none}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-text strong{font-size:15px;color:var(--ink);font-weight:600;letter-spacing:-.01em}
+.brand-text em{font-style:normal;font-size:11.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.chapnav{
+  margin-left:auto;display:flex;gap:6px;align-items:center;
+  overflow-x:auto;scrollbar-width:none;padding:2px;
+}
+.chapnav::-webkit-scrollbar{display:none}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  padding:7px 13px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--body);
+  border:1px solid transparent;transition:all .18s ease;
+}
+.pill:hover{background:rgba(20,23,30,.05);color:var(--ink)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex-shrink:0;opacity:.55;transition:opacity .18s,transform .18s}
+.pill .pnum{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+.pill.is-active{background:color-mix(in srgb, var(--c) 12%, transparent);color:var(--c);border-color:color-mix(in srgb, var(--c) 26%, transparent);font-weight:600}
+.pill.is-active .dot{opacity:1;transform:scale(1.15)}
+.pill.is-active .pnum{color:var(--c);opacity:.75}
+.scrollbar{height:2px;background:transparent}
+.scrollbar i{display:block;height:100%;width:0;background:var(--ink);opacity:.55;transition:width .1s linear}
+
+/* ---------- hero ---------- */
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;padding:72px 0 60px}
+.eyebrow{
+  font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--rust);
+  font-weight:600;margin:0 0 16px;
+}
+.hero h1{font-size:clamp(34px,4.4vw,52px);line-height:1.08;margin:0 0 20px}
+.hero h1 em{font-style:italic;color:var(--primary)}
+.lead{font-size:17px;color:var(--body);max-width:56ch;margin:0 0 30px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:38px}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:12px 22px;border-radius:12px;font-weight:600;font-size:15px;transition:all .18s ease;border:1px solid transparent}
+.btn-primary{background:var(--ink);color:var(--bg);box-shadow:var(--shadow-2)}
+.btn-primary:hover{transform:translateY(-1px);background:var(--ink-hover)}
+.btn-ghost{border-color:var(--line);background:var(--surface);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--ink);transform:translateY(-1px)}
+.stats{display:flex;flex-wrap:wrap;gap:0;list-style:none;padding:0;margin:0}
+.stats li{padding:0 22px;border-left:1px solid var(--line)}
+.stats li:first-child{padding-left:0;border-left:none}
+.stats b{display:block;font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink);line-height:1.2}
+.stats span{font-size:12.5px;color:var(--muted);letter-spacing:.02em}
+
+/* path card */
+.path-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:26px 26px 22px;box-shadow:var(--shadow-2)}
+.path-title{font-size:19px;margin:0 0 4px}
+.path-sub{font-size:13px;color:var(--muted);margin:0 0 22px}
+.timeline{list-style:none;margin:0;padding:0;position:relative}
+.timeline::before{content:"";position:absolute;left:17px;top:18px;bottom:22px;width:2px;background:linear-gradient(180deg,var(--rust),var(--primary),#4a6fa5,#9c4f63);opacity:.28}
+.tl-step{position:relative;padding:0 0 20px 54px}
+.tl-step:last-child{padding-bottom:0}
+.tl-dot{
+  position:absolute;left:0;top:0;width:36px;height:36px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--c);display:grid;place-items:center;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--c);
+  box-shadow:0 0 0 5px var(--bg);
+}
+.tl-name{font-weight:600;color:var(--ink);font-size:15.5px;line-height:36px;display:block}
+.tl-meta{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;margin-top:2px}
+.tl-meta .sep{width:3px;height:3px;border-radius:50%;background:var(--line);display:inline-block}
+
+/* ---------- toc head ---------- */
+.toc-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:28px;flex-wrap:wrap;
+  padding:18px 0 30px;border-top:1px solid var(--line);
+}
+.toc-head h2{font-size:clamp(26px,3vw,34px);margin:0}
+.toc-head .sub{font-size:14.5px;color:var(--muted);margin:8px 0 0}
+.search-wrap{position:relative;display:flex;align-items:center;gap:10px}
+.search-wrap svg{position:absolute;left:14px;color:var(--muted);pointer-events:none}
+#search{
+  width:340px;max-width:100%;padding:12px 40px 12px 42px;border-radius:12px;
+  border:1px solid var(--line);background:var(--surface);font-family:inherit;font-size:14.5px;color:var(--ink);
+  transition:all .18s ease;
+}
+#search::placeholder{color:var(--muted);opacity:.75}
+#search:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(20,23,30,.06)}
+#searchClear{
+  position:absolute;right:10px;border:none;background:transparent;cursor:pointer;color:var(--muted);
+  font-size:18px;line-height:1;padding:4px;border-radius:6px;display:none;
+}
+#searchClear:hover{color:var(--ink);background:rgba(20,23,30,.05)}
+#searchClear.show{display:block}
+.search-count{font-size:12.5px;color:var(--muted);white-space:nowrap}
+
+/* ---------- chapter ---------- */
+.chapter{padding:0 0 64px;scroll-margin-top:92px}
+.chapter[hidden]{display:none}
+.ch-opener{
+  display:grid;grid-template-columns:auto 1fr auto;gap:26px;align-items:center;
+  background:color-mix(in srgb, var(--c) 6%, var(--surface));
+  border:1px solid color-mix(in srgb, var(--c) 18%, var(--line));
+  border-radius:20px;padding:22px 26px;margin-bottom:20px;
+}
+.ch-num{
+  font-family:'DM Serif Display',serif;font-size:58px;line-height:.9;color:var(--c);
+  padding-right:26px;border-right:1px solid color-mix(in srgb, var(--c) 22%, transparent);
+  min-width:96px;text-align:center;
+}
+.ch-label{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--c);font-weight:600;margin:0 0 4px}
+.ch-opener h2{font-size:30px;margin:0 0 3px}
+.ch-sub{font-size:13.5px;color:var(--muted);font-style:italic;margin:0 0 8px}
+.ch-desc{font-size:14.5px;color:var(--body);margin:0;max-width:66ch}
+.ch-meta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.ch-count{
+  font-size:12.5px;color:var(--c);background:color-mix(in srgb, var(--c) 12%, transparent);
+  border:1px solid color-mix(in srgb, var(--c) 24%, transparent);
+  padding:6px 13px;border-radius:999px;font-weight:600;white-space:nowrap;
+}
+.ch-start{font-size:13.5px;font-weight:600;color:var(--c);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.ch-start svg{transition:transform .18s ease}
+.ch-start:hover svg{transform:translateX(3px)}
+
+/* ---------- lesson grid ---------- */
+.lesson-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.lesson{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;box-shadow:var(--shadow-1);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease;
+}
+.lesson:hover{transform:translateY(-2px);box-shadow:var(--shadow-2);border-color:color-mix(in srgb, var(--c) 40%, var(--line));background:color-mix(in srgb, var(--c) 3%, var(--surface))}
+.l-code{
+  flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;
+  color:var(--c);background:color-mix(in srgb, var(--c) 11%, transparent);
+  border:1px solid color-mix(in srgb, var(--c) 20%, transparent);
+  padding:5px 9px;border-radius:9px;margin-top:1px;
+}
+.l-body{flex:1;min-width:0}
+.l-title{display:block;font-weight:600;color:var(--ink);font-size:15.5px;line-height:1.4;margin-bottom:3px;text-wrap:balance}
+.l-desc{display:block;font-size:13.5px;color:var(--body);line-height:1.5;margin-bottom:9px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.l-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.lvl{text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600;
+  color:color-mix(in srgb, var(--c) 78%, var(--ink));
+  background:color-mix(in srgb, var(--c) 9%, transparent);
+  padding:3px 8px;border-radius:6px}
+.l-tag{text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;font-weight:600;color:var(--rust);
+  background:color-mix(in srgb, var(--rust) 13%, transparent);
+  border:1px solid color-mix(in srgb, var(--rust) 28%, transparent);padding:3px 8px;border-radius:6px}
+.l-sep{width:3px;height:3px;border-radius:50%;background:var(--line);display:inline-block}
+.l-arrow{flex-shrink:0;color:var(--line);margin-top:4px;transition:transform .2s ease,color .2s ease}
+.lesson:hover .l-arrow{transform:translateX(3px);color:var(--c)}
+.lesson[hidden]{display:none}
+
+.empty{
+  text-align:center;padding:60px 20px;color:var(--muted);
+  background:var(--surface);border:1px dashed var(--line);border-radius:18px;
+}
+.empty h3{font-size:22px;margin-bottom:8px}
+.empty p{margin:0;font-size:14.5px}
+
+/* ---------- footer ---------- */
+footer{margin-top:20px;border-top:1px solid var(--line);padding:34px 0 54px}
+.foot-inner{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+.foot-note{font-size:13.5px;color:var(--muted);max-width:60ch}
+.foot-note b{color:var(--ink);font-weight:600}
+.foot-meta{font-size:12.5px;color:var(--muted);text-align:right}
+.foot-meta code{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--surface-2);border:1px solid var(--line);padding:2px 7px;border-radius:6px;color:var(--ink)}
+
+/* ---------- responsive ---------- */
+@media (max-width:960px){
+  .hero{grid-template-columns:1fr;gap:40px;padding:52px 0 46px}
+  .path-card{order:2}
+  .ch-opener{grid-template-columns:auto 1fr;gap:20px}
+  .ch-meta{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;text-align:left;width:100%}
+}
+@media (max-width:720px){
+  .topbar-inner{flex-wrap:wrap;gap:10px;padding:10px 18px}
+  .brand{order:0}
+  .theme-toggle{order:1;margin-left:auto}
+  .chapnav{order:2;margin-left:0;width:100%;padding-bottom:2px}
+  .toc-head{padding-bottom:24px}
+  .search-wrap{width:100%}
+  #search{width:100%}
+  .ch-num{font-size:44px;min-width:72px;padding-right:18px}
+  .ch-opener h2{font-size:25px}
+  .ch-opener{padding:18px;gap:16px}
+  .lesson-grid{grid-template-columns:1fr}
+  .stats li{padding:0 16px}
+  .stats b{font-size:22px}
+  .hero{padding:40px 0 38px}
+  .hero h1{font-size:30px}
+  .lead{font-size:16px}
+  .eyebrow{font-size:10.5px;margin-bottom:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 4.5A2.5 2.5 0 0 1 4.5 2H10a2 2 0 0 1 2 2v17a2 2 0 0 0-2-2H4.5A2.5 2.5 0 0 1 2 16.5z"/>
+          <path d="M22 4.5A2.5 2.5 0 0 0 19.5 2H14a2 2 0 0 0-2 2v17a2 2 0 0 1 2-2h5.5a2.5 2.5 0 0 0 2-2z"/>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <strong>C++ Nền Tảng</strong>
+        <em>Tài liệu học lập trình</em>
+      </span>
+    </a>
+    <nav class="chapnav" id="chapnav" aria-label="Danh sách chương"></nav>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Đổi giao diện sáng/tối" title="Đổi giao diện sáng / tối">
+      <svg class="ico-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="ico-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+  <div class="scrollbar"><i id="scrollfill"></i></div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="wrap hero" id="top">
+    <div class="hero-copy">
+      <p class="eyebrow">Lớp 10 · Lập trình C++ · Từ nền tảng đến bài tổng hợp</p>
+      <h1>Học C++ theo từng chương, <em>bài học</em> nối tiếp nhau</h1>
+      <p class="lead">Mỗi chương là một mảng kiến thức riêng, bên trong gồm các bài học nhỏ đi theo thứ tự từ dễ đến khó. Bạn luôn biết mình đang học bài nào, thuộc chương nào, và còn bao nhiêu phía trước.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#so-hoc">
+          Bắt đầu Chương 1
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#toc">Xem toàn bộ mục lục</a>
+      </div>
+      <ul class="stats">
+        <li><b id="statChapters">4</b><span>Chương</span></li>
+        <li><b id="statLessons">0</b><span>Bài học</span></li>
+        <li><b id="statHours">0</b><span>Giờ học ước tính</span></li>
+      </ul>
+    </div>
+
+    <aside class="path-card">
+      <h2 class="path-title">Lộ trình học</h2>
+      <p class="path-sub">Học theo thứ tự từ trên xuống, mỗi chương mở khi bạn đã nắm chương trước.</p>
+      <ol class="timeline" id="timeline"></ol>
+    </aside>
+  </section>
+
+  <!-- TOC -->
+  <section class="wrap" id="toc">
+    <div class="toc-head">
+      <div>
+        <p class="eyebrow">Mục lục</p>
+        <h2>Tất cả bài học trong 4 chương</h2>
+        <p class="sub">Số ở góc mỗi thẻ là mã bài học — <b>1.3</b> nghĩa là bài thứ 3 của Chương 1, màu của số trùng màu chương.</p>
+      </div>
+      <div class="search-wrap">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="search" type="search" placeholder="Tìm bài học — ví dụ: Euclid, số nguyên tố…" autocomplete="off" aria-label="Tìm bài học">
+        <button id="searchClear" type="button" aria-label="Xóa tìm kiếm">×</button>
+        <span class="search-count" id="searchCount"></span>
+      </div>
+    </div>
+    <div id="chapters"></div>
+    <div class="empty" id="emptyState" hidden>
+      <h3>Chưa tìm thấy bài học nào</h3>
+      <p>Thử từ khoá khác, ví dụ “mảng”, “chuỗi”, “sắp xếp”.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-inner">
+    <p class="foot-note"><b>C++ Nền Tảng</b> — tài liệu học lập trình cho học sinh. Giao diện này được thiết kế để khi thêm chương mới hoặc bài học mới, mục lục và số liệu tự động cập nhật theo.</p>
+    <p class="foot-meta">Bản giao diện trang chủ · Dữ liệu chương nằm trong mảng <code>CHAPTERS</code></p>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   DỮ LIỆU MỤC LỤC
+   ------------------------------------------------------------
+   • Thêm CHƯƠNG mới  : thêm 1 đối tượng vào mảng CHAPTERS
+   • Thêm BÀI HỌC mới: thêm 1 đối tượng vào lessons của chương
+   Mọi thứ (số bài, giờ học, thanh điều hướng, lộ trình) tự tính.
+   ============================================================ */
+const CHAPTERS = [
+  {
+    id: 'so-hoc',
+    num: '01',
+    title: 'Số học',
+    subtitle: 'Toán học ứng dụng bằng C++',
+    desc: 'Nền tảng cho phần lớn bài toán tính toán: làm quen với kiểu dữ liệu số, phép chia có dư, thuật toán Euclid, số nguyên tố, phân tích thừa số và số học modulo.',
+    color: '#c97b3f',
+    colorDark: '#e0a56e',
+    lessons: [
+      { code:'1.1', title:'Kiểu dữ liệu số và phép toán cơ bản', desc:'int, long long, double; ép kiểu ngầm định và những lỗi chia sai thường gặp.', level:'Nền tảng', time:'25 phút', href:'so-hoc/1-1-kieu-du-lieu-so.html' },
+      { code:'1.2', title:'Chia có dư, ước và bội', desc:'Phép chia lấy dư, định nghĩa ước – bội, duyệt từ 1 đến √n để tìm ước của một số.', level:'Nền tảng', time:'30 phút', href:'so-hoc/1-2-chia-co-du-uo-chi-boi.html' },
+      { code:'1.3', title:'Thuật toán Euclid — UCLN và BCNN', desc:'Cài đặt Euclid bằng vòng lặp và bằng đệ quy, cách suy ra BCNN từ UCLN.', level:'Nền tảng', time:'35 phút', href:'so-hoc/1-3-euclid-ucln-bcnn.html' },
+      { code:'1.4', title:'Số nguyên tố và sàng lọc Eratosthenes', desc:'Nhận biết số nguyên tố, thuật toán sàng lọc trên mảng đánh dấu và ứng dụng đếm số nguyên tố.', level:'Trung bình', time:'40 phút', href:'so-hoc/1-4-so-nguyen-to.html' },
+      { code:'1.5', title:'Phân tích số thành thừa số nguyên tố', desc:'Thuật toán phân tích, đếm số mũi của từng thừa số và bài toán đếm ước số.', level:'Trung bình', time:'35 phút', href:'so-hoc/1-5-phan-tich-so.html' },
+      { code:'1.6', title:'Số học modulo và hệ đồng dư', desc:'Phép toán phần dư, tính lũy thừa trong mod và cách giải bài toán chia dư nhanh.', level:'Trung bình', time:'30 phút', href:'so-hoc/1-6-so-hoc-modulo.html' },
+      { code:'1.7', title:'Lũy thừa nhanh và số hoàn hảo', desc:'Binh phương có lặp, kiểm tra số hoàn hảo, số Armstrong bằng lũy thừa và chuỗi số.', level:'Nâng cao', time:'40 phút', href:'so-hoc/1-7-luy-thua-nhanh.html' }
+    ]
+  },
+  {
+    id: 'chuoi',
+    num: '02',
+    title: 'String',
+    subtitle: 'Xử lý xâu ký tự',
+    desc: 'Làm quen với kiểu string trong C++: duyệt chuỗi, các hàm thư viện thường dùng, xử lý nhập có dấu cách, đếm tần suất, tách – đảo – chuẩn hóa chuỗi.',
+    color: '#2f6f5e',
+    colorDark: '#5cb79c',
+    lessons: [
+      { code:'2.1', title:'Chuỗi là gì và ký tự trong C++', desc:'Khởi tạo string, truy cập từng ký tự, lấy độ dài và duyệt chuỗi bằng chỉ số.', level:'Nền tảng', time:'25 phút', href:'chuoi/2-1-khai-biem-chuoi.html' },
+      { code:'2.2', title:'Thư viện <string> và những hàm cần biết', desc:'size, substr, find, erase, replace, append, push_back — khi nào dùng hàm nào.', level:'Nền tảng', time:'35 phút', href:'chuoi/2-2-thu-vien-string.html' },
+      { code:'2.3', title:'Nối chuỗi và so sánh chuỗi', desc:'Toán tử + và +=, so sánh theo thứ tự từ điển và khác biệt với so sánh phân số.', level:'Nền tảng', time:'20 phút', href:'chuoi/2-3-noi-so-sanh.html' },
+      { code:'2.4', title:'Nhập chuỗi có dấu cách', desc:'getline, cin.ignore và cách xử lý ký tự thừa hoặc ký tự \r trên Windows.', level:'Nền tảng', time:'20 phút', href:'chuoi/2-4-nhap-chuoi-co-dau-cach.html' },
+      { code:'2.5', title:'Đếm ký tự và lập bảng tần suất', desc:'Đếm chữ cái, chữ số, khoảng trắng; xây bảng tần suất 26 chữ cái.', level:'Trung bình', time:'30 phút', href:'chuoi/2-5-dem-ky-tu.html' },
+      { code:'2.6', title:'Tách, đảo và chuẩn hóa chuỗi', desc:'Tách theo dấu cách, đảo chuỗi, đổi hoa thường và lọc bỏ ký tự đặc biệt.', level:'Trung bình', time:'35 phút', href:'chuoi/2-6-tach-dao-chuan-hoa.html' },
+      { code:'2.7', title:'Xâu đối xứng — Palindrome', desc:'Ý tưởng so sánh hai đầu, cách bỏ qua khoảng trắng và ký tự đặc biệt trước khi so sánh.', level:'Trung bình', time:'30 phút', href:'chuoi/2-7-xau-doi-xung.html' }
+    ]
+  },
+  {
+    id: 'mang',
+    num: '03',
+    title: 'Mảng và thuật toán trên mảng',
+    subtitle: 'Từ duyệt mảng đến quicksort',
+    desc:'Trái tim của phần lập trình thi: tìm kiếm, sắp xếp, mảng hai chiều, hai con trỏ, cửa sổ trượt và mảng đánh dấu — mỗi thuật toán gắn với một bài toán quen thuộc.',
+    color: '#4a6fa5',
+    colorDark: '#86abdf',
+    lessons: [
+      { code:'3.1', title:'Mảng một chiều', desc:'Khai báo, khởi tạo, gán giá trị và duyệt mảng; vì sao chỉ số bắt đầu từ 0.', level:'Nền tảng', time:'25 phút', href:'mang/3-1-mang-mot-chieu.html' },
+      { code:'3.2', title:'Tổng, lớn nhất, nhỏ nhất và trung bình', desc:'Một lần duyệt mảng giải quyết nhiều bài toán cơ bản.', level:'Nền tảng', time:'25 phút', href:'mang/3-2-tong-lon-nho.html' },
+      { code:'3.3', title:'Tìm kiếm tuyến tính', desc:'Duyệt từng phần tử, đếm số lần xuất hiện, tìm vị trí đầu tiên và cuối cùng.', level:'Nền tảng', time:'30 phút', href:'mang/3-3-tim-kiem-tuyen-tinh.html' },
+      { code:'3.4', title:'Tìm kiếm nhị phân', desc:'Điều kiện mảng đã sắp xếp, cách chia đôi đoạn tìm kiếm và ứng dụng với mảng rất lớn.', level:'Trung bình', time:'35 phút', href:'mang/3-4-tim-kiem-nhi-phan.html' },
+      { code:'3.5', title:'Sắp xếp: hoán vị, chọn, đếm', desc:'Ba thuật toán sắp xếp cơ bản, cách viết vòng lặp và so sánh số lần hoán đổi.', level:'Trung bình', time:'40 phút', href:'mang/3-5-sap-xep-co-ban.html' },
+      { code:'3.6', title:'Sắp xếp: chèn, nổi bọt và quicksort', desc:'Trực quan hoá bằng ví dụ nhỏ, phân tích độ phức tạp và bài toán sắp xếp nâng cao.', level:'Nâng cao', time:'50 phút', href:'mang/3-6-sap-xep-nang-cao.html' },
+      { code:'3.7', title:'Mảng hai chiều và bài toán ma trận', desc:'Duyệt hàng – cột, đường chéo chính, đường chéo phụ và bài toán xoay vòng ma trận.', level:'Trung bình', time:'35 phút', href:'mang/3-7-mang-hai-chieu.html' },
+      { code:'3.8', title:'Hai con trỏ và cửa sổ trượt', desc:'Quét mảng chỉ một lần: bài toán cặp số có tổng đích, loại bỏ vùng dư thừa.', level:'Nâng cao', time:'45 phút', href:'mang/3-8-hai-con-tro.html' },
+      { code:'3.9', title:'Mảng đánh dấu và đếm tần suất', desc:'Dùng mảng phụ để đếm số lần xuất hiện, bài toán dãy tăng liên tiếp dài nhất.', level:'Nâng cao', time:'35 phút', href:'mang/3-9-mang-danh-dau.html' }
+    ]
+  },
+  {
+    id: 'on-tap',
+    num: '04',
+    title: 'Ôn tập',
+    subtitle: 'Tổng kết & đề thi',
+    desc:'Phần chốt lại: sơ đồ tổng hợp toàn bộ kiến thức nền tảng, các bài tập tổng hợp theo từng chủ đề và hai bộ đề thi thử có lời giải.',
+    color: '#9c4f63',
+    colorDark: '#d1829a',
+    lessons: [
+      { code:'4.1', title:'Tổng kết kiến thức C++ nền tảng', desc:'Sơ đồ tổng hợp ba chương đã học và những lỗi học sinh hay mắc phải.', level:'Tổng kết', time:'20 phút', href:'on-tap/4-1-tong-ket.html' },
+      { code:'4.2', title:'Bài tập tổng hợp: Số học', desc:'Bộ 8 bài tập chọn lọc theo chủ đề Chương 1, kèm lời giải tham khảo.', level:'Tổng hợp', time:'45 phút', href:'on-tap/4-2-tong-hop-so-hoc.html', tag:'Có lời giải' },
+      { code:'4.3', title:'Bài tập tổng hợp: Xử lý chuỗi', desc:'Bài tập với mảng ký tự, đếm từ, chuẩn hóa và phân tích một đoạn văn bản.', level:'Tổng hợp', time:'45 phút', href:'on-tap/4-3-tong-hop-chuoi.html', tag:'Có lời giải' },
+      { code:'4.4', title:'Bài tập tổng hợp: Thuật toán trên mảng', desc:'Sắp xếp, tìm kiếm, hai con trỏ và các biến thể nâng cao của bài toán mảng.', level:'Tổng hợp', time:'60 phút', href:'on-tap/4-4-tong-hop-mang.html', tag:'Có lời giải' },
+      { code:'4.5', title:'Đề thi thử giữa kỳ', desc:'5 câu trắc nghiệm và 3 bài lập trình, đáp án nằm ở cuối trang.', level:'Đề thi', time:'60 phút', href:'on-tap/4-5-de-thi-giua-ky.html', tag:'Luyện đề' },
+      { code:'4.6', title:'Đề thi thử cuối kỳ', desc:'Đề trọn bộ cho cả năm, kèm lời giải tham khảo để học sinh tự luyện.', level:'Đề thi', time:'90 phút', href:'on-tap/4-6-de-thi-cuoi-ky.html', tag:'Đề trọn bộ' }
+    ]
+  }
+];
+
+/* ==================== RENDER ==================== */
+const $ = s => document.querySelector(s);
+const chapnav = $('#chapnav');
+const chaptersEl = $('#chapters');
+const timelineEl = $('#timeline');
+
+const ARROW = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+function lessonCard(ch, l, ci){
+  const tag = l.tag ? `<span class="l-tag">${l.tag}</span>` : '';
+  const index = [l.code,l.title,l.desc,l.level,l.tag||''].join(' ').toLowerCase().replace(/"/g,'');
+  return `
+  <a class="lesson" style="--c:var(--c${ci+1})" href="${l.href}" data-search="${index}">
+    <span class="l-code">${l.code}</span>
+    <span class="l-body">
+      <span class="l-title">${l.title}</span>
+      <span class="l-desc">${l.desc}</span>
+      <span class="l-meta">
+        <span class="lvl">${l.level}</span>${tag}
+        <span class="l-sep"></span>
+        <span>${l.time}</span>
+      </span>
+    </span>
+    <span class="l-arrow">${ARROW}</span>
+  </a>`;
+}
+
+chaptersEl.innerHTML = CHAPTERS.map((ch,ci) => `
+  <section class="chapter" id="${ch.id}" style="--c:var(--c${ci+1})">
+    <div class="ch-opener">
+      <div class="ch-num">${ch.num}</div>
+      <div>
+        <p class="ch-label">Chương ${ch.num}</p>
+        <h2>${ch.title}</h2>
+        <p class="ch-sub">${ch.subtitle}</p>
+        <p class="ch-desc">${ch.desc}</p>
+      </div>
+      <div class="ch-meta">
+        <span class="ch-count">${ch.lessons.length} bài học</span>
+        <a class="ch-start" href="${ch.lessons[0].href}">Học chương này ${ARROW}</a>
+      </div>
+    </div>
+    <div class="lesson-grid">${ch.lessons.map(l => lessonCard(ch,l,ci)).join('')}</div>
+  </section>
+`).join('');
+
+chapnav.innerHTML = CHAPTERS.map((ch,ci) => `
+  <a class="pill" href="#${ch.id}" style="--c:var(--c${ci+1})" data-chapter="${ch.id}">
+    <span class="dot"></span><span class="pnum">${ch.num}</span>${ch.title}
+  </a>`).join('');
+
+timelineEl.innerHTML = CHAPTERS.map((ch,ci) => `
+  <li class="tl-step" style="--c:var(--c${ci+1})">
+    <span class="tl-dot">${ch.num}</span>
+    <a class="tl-name" href="#${ch.id}">${ch.title}</a>
+    <span class="tl-meta">${ch.lessons.length} bài học <span class="sep"></span> ${ch.subtitle}</span>
+  </li>`).join('');
+
+/* ==================== GIAO DIỆN SÁNG / TỐI ==================== */
+const THEME_KEY = 'cpp-theme';
+const toggleBtn = $('#themeToggle');
+
+function applyChapterColors(){
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  CHAPTERS.forEach((ch,i)=>{
+    document.documentElement.style.setProperty(`--c${i+1}`, dark ? (ch.colorDark || ch.color) : ch.color);
+  });
+}
+function setTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  try{ localStorage.setItem(THEME_KEY, theme); }catch(e){}
+  applyChapterColors();
+  toggleBtn.setAttribute('aria-label', theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối');
+}
+toggleBtn.addEventListener('click', ()=>{
+  setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+});
+(function initTheme(){
+  let saved = null;
+  try{ saved = localStorage.getItem(THEME_KEY); }catch(e){}
+  const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  setTheme(theme);
+})();
+
+/* ==================== SỐ LIỆU ==================== */
+const totalLessons = CHAPTERS.reduce((s,c)=>s+c.lessons.length,0);
+const totalMin = CHAPTERS.reduce((s,c)=>s+c.lessons.reduce((a,l)=>a+parseInt(l.time,10),0),0);
+$('#statChapters').textContent = CHAPTERS.length;
+$('#statLessons').textContent = totalLessons;
+$('#statHours').textContent = Math.round(totalMin/60);
+
+/* ==================== TÌM KIẾM ==================== */
+const searchInput = $('#search');
+const searchCount = $('#searchCount');
+const searchClear = $('#searchClear');
+const emptyState = $('#emptyState');
+
+function applyFilter(q){
+  q = q.trim().toLowerCase();
+  searchClear.classList.toggle('show', q.length>0);
+  let total = 0, shown = 0;
+  document.querySelectorAll('.chapter').forEach(ch=>{
+    let chShown = 0;
+    ch.querySelectorAll('.lesson').forEach(a=>{
+      const hit = !q || a.dataset.search.includes(q);
+      a.hidden = !hit;
+      if(hit) chShown++;
+    });
+    ch.hidden = chShown===0;
+    const badge = ch.querySelector('.ch-count');
+    if(badge) badge.textContent = q ? `${chShown} bài khớp` : `${ch.querySelectorAll('.lesson').length} bài học`;
+    total += ch.querySelectorAll('.lesson').length;
+    shown += chShown;
+  });
+  emptyState.hidden = shown>0;
+  searchCount.textContent = q ? `${shown}/${total} bài học` : '';
+}
+searchInput.addEventListener('input', e=>applyFilter(e.target.value));
+searchClear.addEventListener('click', ()=>{searchInput.value='';applyFilter('');searchInput.focus();});
+
+/* ==================== SCROLL-SPY + PROGRESS ==================== */
+const pills = [...document.querySelectorAll('.pill')];
+const fill = $('#scrollfill');
+const sections = [...document.querySelectorAll('.chapter')];
+
+function setActive(id){
+  pills.forEach(p=>p.classList.toggle('is-active', p.dataset.chapter===id));
+}
+const io = new IntersectionObserver(entries=>{
+  const visible = entries.filter(e=>e.isIntersecting)
+    .sort((a,b)=>a.boundingClientRect.top - b.boundingClientRect.top);
+  if(visible.length) setActive(visible[0].target.id);
+}, {rootMargin:'-120px 0px -55% 0px', threshold:0});
+sections.forEach(s=>io.observe(s));
+
+function onScroll(){
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  const p = h>0 ? Math.min(1, window.scrollY/h) : 0;
+  fill.style.width = (p*100)+'%';
+}
+window.addEventListener('scroll', onScroll, {passive:true});
+onScroll();
+setActive(CHAPTERS[0].id);
+</script>
+</body>
+</html>
